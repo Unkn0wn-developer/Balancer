@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WarEra Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+  </div>
+
+  <div class="noise"></div>
+
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">⚔️</span>
+        <span class="logo-text">WarEra<span class="logo-accent">HQ</span></span>
+      </div>
+      <div class="header-status" id="apiStatus">
+        <span class="status-dot"></span>
+        <span class="status-text">Connecting…</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONFIG PANEL (shown if no config saved) -->
+  <div id="configOverlay" class="config-overlay">
+    <div class="config-card">
+      <div class="config-header">
+        <span class="config-icon">🔧</span>
+        <h2>Dashboard Setup</h2>
+        <p>Enter your credentials to get started. Stored locally in your browser.</p>
+      </div>
+      <div class="config-fields">
+        <div class="field-group">
+          <label>Warera API Key</label>
+          <input type="password" id="cfgApiKey" placeholder="Your API key from game settings" autocomplete="off"/>
+        </div>
+        <div class="field-group">
+          <label>Your User ID</label>
+          <input type="text" id="cfgUserId" placeholder="e.g. 123456" autocomplete="off"/>
+        </div>
+        <div class="field-group">
+          <label>MU ID <span class="label-sub">(2nd Para SF)</span></label>
+          <input type="text" id="cfgMuId" placeholder="e.g. 789" autocomplete="off"/>
+        </div>
+      </div>
+      <div class="config-actions">
+        <button class="btn-primary" onclick="saveConfig()">Save & Launch 🚀</button>
+        <p class="config-note">You can update these anytime via the ⚙️ button in the header.</p>
+      </div>
+    </div>
+  </div>
+
+  <main class="main" id="mainContent" style="display:none">
+    <!-- TABS -->
+    <div class="tabs-wrapper">
+      <div class="tabs">
+        <button class="tab active" data-tab="me" onclick="switchTab('me')">
+          <span class="tab-icon">👤</span> My Profile
+        </button>
+        <button class="tab" data-tab="mu" onclick="switchTab('mu')">
+          <span class="tab-icon">🪖</span> 2nd Para SF
+        </button>
+      </div>
+      <div class="tab-actions">
+        <button class="btn-icon" id="refreshBtn" onclick="refreshCurrentTab()" title="Refresh">🔄</button>
+        <button class="btn-icon" onclick="openConfig()" title="Settings">⚙️</button>
+      </div>
+    </div>
+
+    <!-- MY PROFILE TAB -->
+    <div id="tab-me" class="tab-content active">
+      <div class="section-grid">
+        <!-- Identity Card -->
+        <div class="card card-identity" id="cardUserInfo">
+          <div class="card-header"><span>🧬</span> Identity</div>
+          <div class="card-body" id="userInfoBody"><div class="skeleton-block"></div></div>
+        </div>
+        <!-- Wealth -->
+        <div class="card" id="cardWealth">
+          <div class="card-header"><span>💰</span> Wealth</div>
+          <div class="card-body" id="wealthBody"><div class="skeleton-block"></div></div>
+        </div>
+        <!-- Damage -->
+        <div class="card" id="cardDamage">
+          <div class="card-header"><span>💥</span> Damage</div>
+          <div class="card-body" id="damageBody"><div class="skeleton-block"></div></div>
+        </div>
+      </div>
+
+      <!-- Companies -->
+      <div class="card card-wide" id="cardCompanies">
+        <div class="card-header"><span>🏭</span> Companies</div>
+        <div class="card-body" id="companiesBody"><div class="skeleton-block"></div></div>
+      </div>
+
+      <!-- Transactions -->
+      <div class="card card-wide" id="cardTxn">
+        <div class="card-header">
+          <span>📊</span> Transactions
+          <div class="txn-filters" id="txnFilters">
+            <button class="filter-btn active" data-type="ALL" onclick="filterTxn('ALL')">All</button>
+            <button class="filter-btn" data-type="ITEM_MARKET" onclick="filterTxn('ITEM_MARKET')">🛒 Item Market</button>
+            <button class="filter-btn" data-type="TRADING" onclick="filterTxn('TRADING')">🔄 Trading</button>
+            <button class="filter-btn" data-type="WAGE" onclick="filterTxn('WAGE')">💵 Wages</button>
+            <button class="filter-btn" data-type="DONATION" onclick="filterTxn('DONATION')">🎁 Donations</button>
+            <button class="filter-btn" data-type="CRAFT_ITEM" onclick="filterTxn('CRAFT_ITEM')">🔨 Crafting</button>
+            <button class="filter-btn" data-type="OPEN_CASE" onclick="filterTxn('OPEN_CASE')">📦 Cases</button>
+            <button class="filter-btn" data-type="OTHER" onclick="filterTxn('OTHER')">➕ Other</button>
+          </div>
+        </div>
+        <div class="txn-summary" id="txnSummary"></div>
+        <div class="card-body" id="txnBody"><div class="skeleton-block"></div></div>
+
+        <!-- Profit Tracker -->
+        <div class="profit-tracker" id="profitTracker">
+          <div class="pt-header">
+            <span>📈 Profit Tracker</span>
+            <button class="btn-small" onclick="addProfitEntry()">+ Mark Trade</button>
+          </div>
+          <div id="profitList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MU TAB -->
+    <div id="tab-mu" class="tab-content">
+      <div class="section-grid">
+        <!-- MU Identity -->
+        <div class="card card-identity" id="cardMuInfo">
+          <div class="card-header"><span>🪖</span> 2nd Para SF</div>
+          <div class="card-body" id="muInfoBody"><div class="skeleton-block"></div></div>
+        </div>
+        <!-- MU Wealth -->
+        <div class="card" id="cardMuWealth">
+          <div class="card-header"><span>💰</span> MU Wallet</div>
+          <div class="card-body" id="muWealthBody"><div class="skeleton-block"></div></div>
+        </div>
+        <!-- MU Damage -->
+        <div class="card" id="cardMuDmg">
+          <div class="card-header"><span>💥</span> MU Damage</div>
+          <div class="card-body" id="muDmgBody"><div class="skeleton-block"></div></div>
+        </div>
+      </div>
+
+      <!-- Build Distribution -->
+      <div class="card card-wide" id="cardBuilds">
+        <div class="card-header"><span>⚡</span> Build Distribution</div>
+        <div class="card-body" id="buildsBody"><div class="skeleton-block"></div></div>
+      </div>
+
+      <!-- Members Table -->
+      <div class="card card-wide" id="cardMembers">
+        <div class="card-header">
+          <span>🧑‍🤝‍🧑</span> Members
+          <div class="member-sort">
+            <select id="memberSort" onchange="sortMembers(this.value)">
+              <option value="level">Sort: Level</option>
+              <option value="strength">Sort: Strength</option>
+              <option value="workSkill">Sort: Work Skill</option>
+              <option value="build">Sort: Build</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body" id="membersBody"><div class="skeleton-block"></div></div>
+      </div>
+
+      <!-- MU Transactions -->
+      <div class="card card-wide" id="cardMuTxn">
+        <div class="card-header">
+          <span>📊</span> MU Transactions
+          <div class="txn-filters">
+            <button class="filter-btn active" data-type="ALL" onclick="filterMuTxn('ALL')">All</button>
+            <button class="filter-btn" data-type="DONATION" onclick="filterMuTxn('DONATION')">🎁 Donations</button>
+            <button class="filter-btn" data-type="TRADING" onclick="filterMuTxn('TRADING')">🔄 Trading</button>
+            <button class="filter-btn" data-type="WAGE" onclick="filterMuTxn('WAGE')">💵 Wages</button>
+          </div>
+        </div>
+        <div class="card-body" id="muTxnBody"><div class="skeleton-block"></div></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- PROFIT MARK MODAL -->
+  <div id="profitModal" class="modal-overlay" style="display:none">
+    <div class="modal-card">
+      <div class="modal-header">📈 Mark a Trade for Profit Tracking</div>
+      <div class="field-group">
+        <label>Item Name</label>
+        <input type="text" id="ptItem" placeholder="e.g. Iron Q1"/>
+      </div>
+      <div class="field-group">
+        <label>Buy Price (per unit)</label>
+        <input type="number" id="ptBuy" placeholder="0.00"/>
+      </div>
+      <div class="field-group">
+        <label>Sell Price (per unit)</label>
+        <input type="number" id="ptSell" placeholder="0.00"/>
+      </div>
+      <div class="field-group">
+        <label>Quantity</label>
+        <input type="number" id="ptQty" placeholder="1"/>
+      </div>
+      <div class="field-group">
+        <label>Notes (optional)</label>
+        <input type="text" id="ptNotes" placeholder="Any notes…"/>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="saveProfitEntry()">Save Trade</button>
+        <button class="btn-ghost" onclick="closeProfitModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUILD THRESHOLD MODAL -->
+  <div id="buildModal" class="modal-overlay" style="display:none">
+    <div class="modal-card">
+      <div class="modal-header">⚡ Define Build Thresholds</div>
+      <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem">
+        Players are classified based on their strength vs work skill ratio.
+      </p>
+      <div class="field-group">
+        <label>Fight Build — Strength ≥ <span id="fightVal">70</span>%</label>
+        <input type="range" id="fightThresh" min="50" max="90" value="70"
+          oninput="document.getElementById('fightVal').textContent=this.value"/>
+      </div>
+      <div class="field-group">
+        <label>Economy Build — Work Skill ≥ <span id="ecoVal">70</span>%</label>
+        <input type="range" id="ecoThresh" min="50" max="90" value="70"
+          oninput="document.getElementById('ecoVal').textContent=this.value"/>
+      </div>
+      <p style="color:var(--text-muted);font-size:0.8rem">Anything in between is Hybrid 🔀</p>
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="saveBuildThresholds()">Apply</button>
+        <button class="btn-ghost" onclick="document.getElementById('buildModal').style.display='none'">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
