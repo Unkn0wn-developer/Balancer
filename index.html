@@ -70,7 +70,7 @@
         .stat-row:last-child { border-bottom: none; }
         .stat-label { color: #94a3b8; font-weight: bold; }
         .stat-value { color: #f8fafc; }
-        .error { color: #ef4444; margin-top: 15px; display: none; }
+        .error { color: #ef4444; margin-top: 15px; display: none; text-align: left; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -93,7 +93,7 @@
 
     <script>
         // --- PUT YOUR API KEY HERE ---
-        const API_TOKEN = "wae_26c02304886acdaa49197978c5cc976a24ffe7aed1e976caf317ac4ac336a042"; 
+        const API_TOKEN = "YOUR_API_KEY_HERE"; 
 
         async function fetchProfile() {
             const username = document.getElementById('username').value.trim();
@@ -110,25 +110,34 @@
             }
 
             try {
-                // STEP 1: Search for the username to extract the Player ID
+                // STEP 1: Search the new endpoint to extract the Player ID
                 btn.textContent = "Resolving username...";
                 
+                // Assuming the API expects {"query": "name"}. 
                 const searchPayload = { "0": { "json": { "query": username } } };
                 const searchInput = encodeURIComponent(JSON.stringify(searchPayload));
                 
-                const searchRes = await fetch(`https://api2.warera.io/trpc/search.searchAnything?batch=1&input=${searchInput}`, {
+                // Using CORS proxy to prevent browser blocks, and the real search endpoint
+                const searchUrl = `https://corsproxy.io/?https://api2.warera.io/trpc/search.searchAnything?batch=1&input=${searchInput}`;
+                
+                const searchRes = await fetch(searchUrl, {
                     method: 'GET',
                     headers: { "Authorization": `Bearer ${API_TOKEN}`, "Accept": "application/json" }
                 });
 
-                if (!searchRes.ok) throw new Error("Search server connection failed.");
+                if (!searchRes.ok) throw new Error(`Search failed: HTTP ${searchRes.status}`);
                 
                 const searchData = await searchRes.json();
-                const results = searchData[0]?.result?.data || [];
                 
+                // Check if the payload failed Zod validation
+                if (searchData[0]?.error) {
+                    throw new Error("API rejected the search format. The expected input parameter might not be 'query'. Check console for Zod error.");
+                }
+
+                const results = searchData[0]?.result?.data || [];
                 let playerId = null;
                 
-                // Parse the search array to find the exact matching user
+                // Extract the ID from the search results
                 if (Array.isArray(results)) {
                     const match = results.find(r => 
                         (r.type === 'user' || r.type === 'PLAYER' || !r.type) && 
@@ -140,7 +149,7 @@
                     playerId = match ? match.id : results.users[0]?.id;
                 }
 
-                if (!playerId) throw new Error(`Could not locate an ID for "${username}".`);
+                if (!playerId) throw new Error(`Could not locate an ID for "${username}". Make sure the spelling is exact.`);
 
                 // STEP 2: Use the newly found ID to pull the full profile
                 btn.textContent = `Found ID: ${playerId}. Fetching stats...`;
@@ -148,12 +157,14 @@
                 const profilePayload = { "0": { "json": { "id": playerId.toString() } } };
                 const profileInput = encodeURIComponent(JSON.stringify(profilePayload));
                 
-                const profileRes = await fetch(`https://api2.warera.io/trpc/user.getById?batch=1&input=${profileInput}`, {
+                const profileUrl = `https://corsproxy.io/?https://api2.warera.io/trpc/user.getById?batch=1&input=${profileInput}`;
+                
+                const profileRes = await fetch(profileUrl, {
                     method: 'GET',
                     headers: { "Authorization": `Bearer ${API_TOKEN}`, "Accept": "application/json" }
                 });
 
-                if (!profileRes.ok) throw new Error("Failed to fetch player stats.");
+                if (!profileRes.ok) throw new Error(`Profile fetch failed: HTTP ${profileRes.status}`);
 
                 const profileData = await profileRes.json();
                 const playerData = profileData[0]?.result?.data;
@@ -188,6 +199,7 @@
 
             } catch (error) {
                 showError(error.message);
+                console.error(error);
             } finally {
                 btn.textContent = "Search Player";
             }
@@ -195,7 +207,7 @@
 
         function showError(msg) {
             const errorMsg = document.getElementById('errorMsg');
-            errorMsg.textContent = msg;
+            errorMsg.textContent = "❌ " + msg;
             errorMsg.style.display = 'block';
         }
     </script>
