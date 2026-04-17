@@ -116,7 +116,7 @@
                 const searchPayload = { "0": { "json": { "query": username } } };
                 const searchInput = encodeURIComponent(JSON.stringify(searchPayload));
                 
-                const searchRes = await fetch(`https://api2.warera.io/trpc/search.global?batch=1&input=${searchInput}`, {
+                const searchRes = await fetch(`https://api2.warera.io/trpc/search.searchAnything?batch=1&input=${searchInput}`, {
                     method: 'GET',
                     headers: { "Authorization": `Bearer ${API_TOKEN}`, "Accept": "application/json" }
                 });
