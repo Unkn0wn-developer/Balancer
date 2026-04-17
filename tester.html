@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WarEra Player Search</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #0f172a; 
+            color: #f8fafc; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+        }
+        .container {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        h2 { margin-top: 0; color: #38bdf8; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; font-size: 14px; margin-bottom: 8px; color: #94a3b8; }
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: white;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input:focus { outline: none; border-color: #38bdf8; }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #0284c7;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background: #0369a1; }
+        
+        #profileCard {
+            margin-top: 25px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            display: none;
+            text-align: left;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { color: #94a3b8; font-weight: bold; }
+        .stat-value { color: #f8fafc; }
+        .error { color: #ef4444; margin-top: 15px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>WarEra Player Search</h2>
+        
+        <div class="input-group">
+            <label for="username">Enter Username</label>
+            <input type="text" id="username" placeholder="Exact player name...">
+        </div>
+
+        <button onclick="fetchProfile()" id="searchBtn">Search Player</button>
+
+        <div id="errorMsg" class="error"></div>
+
+        <div id="profileCard">
+            </div>
+    </div>
+
+    <script>
+        // --- PUT YOUR API KEY HERE ---
+        const API_TOKEN = "wae_26c02304886acdaa49197978c5cc976a24ffe7aed1e976caf317ac4ac336a042"; 
+
+        async function fetchProfile() {
+            const username = document.getElementById('username').value.trim();
+            const card = document.getElementById('profileCard');
+            const errorMsg = document.getElementById('errorMsg');
+            const btn = document.getElementById('searchBtn');
+
+            card.style.display = 'none';
+            errorMsg.style.display = 'none';
+            
+            if (!username) {
+                showError("Please enter a username.");
+                return;
+            }
+
+            try {
+                // STEP 1: Search for the username to extract the Player ID
+                btn.textContent = "Resolving username...";
+                
+                const searchPayload = { "0": { "json": { "query": username } } };
+                const searchInput = encodeURIComponent(JSON.stringify(searchPayload));
+                
+                const searchRes = await fetch(`https://api2.warera.io/trpc/search.global?batch=1&input=${searchInput}`, {
+                    method: 'GET',
+                    headers: { "Authorization": `Bearer ${API_TOKEN}`, "Accept": "application/json" }
+                });
+
+                if (!searchRes.ok) throw new Error("Search server connection failed.");
+                
+                const searchData = await searchRes.json();
+                const results = searchData[0]?.result?.data || [];
+                
+                let playerId = null;
+                
+                // Parse the search array to find the exact matching user
+                if (Array.isArray(results)) {
+                    const match = results.find(r => 
+                        (r.type === 'user' || r.type === 'PLAYER' || !r.type) && 
+                        r.name && r.name.toLowerCase() === username.toLowerCase()
+                    );
+                    playerId = match ? match.id : (results[0] ? results[0].id : null);
+                } else if (results.users && Array.isArray(results.users)) {
+                    const match = results.users.find(u => u.name.toLowerCase() === username.toLowerCase());
+                    playerId = match ? match.id : results.users[0]?.id;
+                }
+
+                if (!playerId) throw new Error(`Could not locate an ID for "${username}".`);
+
+                // STEP 2: Use the newly found ID to pull the full profile
+                btn.textContent = `Found ID: ${playerId}. Fetching stats...`;
+
+                const profilePayload = { "0": { "json": { "id": playerId.toString() } } };
+                const profileInput = encodeURIComponent(JSON.stringify(profilePayload));
+                
+                const profileRes = await fetch(`https://api2.warera.io/trpc/user.getById?batch=1&input=${profileInput}`, {
+                    method: 'GET',
+                    headers: { "Authorization": `Bearer ${API_TOKEN}`, "Accept": "application/json" }
+                });
+
+                if (!profileRes.ok) throw new Error("Failed to fetch player stats.");
+
+                const profileData = await profileRes.json();
+                const playerData = profileData[0]?.result?.data;
+
+                if (!playerData) throw new Error("Player data is empty or hidden.");
+
+                // Render the final card
+                card.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0; color: #38bdf8;">${playerData.name || username}</h3>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 5px;">Internal ID: ${playerId}</div>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Level</span>
+                        <span class="stat-value">${playerData.level || '0'}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Strength</span>
+                        <span class="stat-value">${playerData.strength || '0'}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Exp</span>
+                        <span class="stat-value">${playerData.experience || '0'}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Country ID</span>
+                        <span class="stat-value">${playerData.countryId || 'N/A'}</span>
+                    </div>
+                `;
+                
+                card.style.display = 'block';
+
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                btn.textContent = "Search Player";
+            }
+        }
+
+        function showError(msg) {
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.textContent = msg;
+            errorMsg.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
