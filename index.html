@@ -114,7 +114,7 @@
                 btn.textContent = "Resolving username...";
                 
                 // Assuming the API expects {"query": "name"}. 
-                const searchPayload = { "0": { "json": { "query": username } } };
+                const searchPayload = { "0": { "json": { "searchText": username } } };
                 const searchInput = encodeURIComponent(JSON.stringify(searchPayload));
                 
                 // Using CORS proxy to prevent browser blocks, and the real search endpoint
