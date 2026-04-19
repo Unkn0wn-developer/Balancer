@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WarEra Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #090b0f;
+  --bg2:      #0e1318;
+  --bg3:      #131a22;
+  --bg4:      #18202b;
+  --border:   #1c2a38;
+  --border2:  #243344;
+  --accent:   #00d4ff;
+  --accent2:  #0099cc;
+  --adim:     rgba(0,212,255,0.08);
+  --aglow:    rgba(0,212,255,0.18);
+  --red:      #ff3f3f;
+  --green:    #2ecc71;
+  --gold:     #f5c518;
+  --orange:   #ff8c42;
+  --text:     #cdd8e3;
+  --textd:    #5a7a96;
+  --textm:    #324e65;
+
+  --c-common:    #6b7280;
+  --c-uncommon:  #22c55e;
+  --c-rare:      #3b82f6;
+  --c-epic:      #a855f7;
+  --c-legendary: #f59e0b;
+  --c-mythic:    #ef4444;
+
+  --bronze:   #cd7f32;
+  --silver:   #c0c0c0;
+  --platinum: #e5e4e2;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* Grid bg */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(0,212,255,0.012) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.012) 1px,transparent 1px);
+  background-size:32px 32px;}
+
+/* ── LOGIN ── */
+#loginScreen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;}
+.lbox{width:100%;max-width:380px;background:var(--bg2);border:1px solid var(--border2);padding:36px 28px;position:relative;}
+.lbox::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--accent);}
+.lbox::after{content:'';position:absolute;top:-1px;left:-1px;right:-1px;bottom:-1px;border:1px solid transparent;box-shadow:0 0 40px rgba(0,212,255,0.06);pointer-events:none;}
+.l-logo{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;letter-spacing:5px;color:var(--accent);margin-bottom:2px;}
+.l-logo span{color:var(--textd);}
+.l-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--textm);letter-spacing:3px;margin-bottom:32px;}
+.l-label{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--textd);letter-spacing:3px;text-transform:uppercase;display:block;margin-bottom:7px;}
+.l-input{width:100%;background:var(--bg3);border:1px solid var(--border2);outline:none;padding:11px 14px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:1px;margin-bottom:14px;transition:border-color .2s,box-shadow .2s;}
+.l-input:focus{border-color:var(--accent);box-shadow:0 0 12px var(--aglow);}
+.l-btn{width:100%;background:var(--accent);border:none;padding:13px;color:var(--bg);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;letter-spacing:4px;text-transform:uppercase;cursor:pointer;transition:background .2s;margin-top:4px;}
+.l-btn:hover{background:#00b8e6;}
+.l-btn:disabled{background:var(--textm);cursor:not-allowed;}
+.l-err{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--red);letter-spacing:1px;margin-top:10px;display:none;}
+.l-check{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--textm);letter-spacing:2px;text-align:center;padding:16px;display:none;}
+
+/* ── APP ── */
+#app{display:none;position:relative;z-index:1;}
+
+/* ── HEADER ── */
+.hdr{background:rgba(9,11,15,0.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;padding:0 16px;}
+.hdr-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:52px;}
+.hdr-logo{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;letter-spacing:4px;color:var(--accent);text-transform:uppercase;}
+.hdr-logo span{color:var(--textd);font-weight:400;}
+.hdr-right{display:flex;align-items:center;gap:12px;}
+.hdr-tag{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--textm);letter-spacing:2px;display:none;}
+.logout-btn{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;padding:5px 12px;border:1px solid var(--border2);background:transparent;color:var(--textd);cursor:pointer;transition:all .2s;text-transform:uppercase;}
+.logout-btn:hover{border-color:var(--red);color:var(--red);}
+
+/* ── TAB BAR ── */
+.tab-bar{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;position:sticky;top:52px;z-index:99;}
+.tab-bar-inner{max-width:900px;margin:0 auto;display:flex;width:100%;}
+.tab-btn{flex:1;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:3px;text-transform:uppercase;padding:13px 8px;background:transparent;border:none;color:var(--textm);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;margin-bottom:-1px;}
+.tab-btn:hover{color:var(--textd);}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* ── PAGE WRAP ── */
+.page{display:none;max-width:900px;margin:0 auto;padding:20px 16px 60px;}
+.page.active{display:block;}
+
+/* ── SEARCH ── */
+.search-wrap{text-align:center;padding:28px 0 24px;}
+.search-title{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;letter-spacing:5px;text-transform:uppercase;margin-bottom:6px;}
+.search-title span{color:var(--accent);}
+.search-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--textd);letter-spacing:3px;margin-bottom:24px;}
+.search-row{display:flex;max-width:480px;margin:0 auto;border:1px solid var(--border2);background:var(--bg2);}
+.search-row:focus-within{border-color:var(--accent);box-shadow:0 0 16px var(--aglow);}
+.search-row input{flex:1;background:transparent;border:none;outline:none;padding:12px 16px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:1px;}
+.search-row input::placeholder{color:var(--textm);}
+.search-row button{background:var(--accent);border:none;padding:12px 20px;color:var(--bg);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:background .2s;white-space:nowrap;}
+.search-row button:hover{background:#00b8e6;}
+.search-row button:disabled{background:var(--textm);cursor:not-allowed;}
+.s-err{margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--red);letter-spacing:1px;display:none;}
+
+/* ── LOADING ── */
+.spin-wrap{display:none;text-align:center;padding:48px 0;}
+.spinner{width:40px;height:40px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spin-txt{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--textm);letter-spacing:3px;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── HERO CARD ── */
+.hero{background:var(--bg2);border:1px solid var(--border2);border-radius:2px;padding:20px;margin-bottom:14px;position:relative;overflow:hidden;animation:fadeUp .4s ease;}
+.hero::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(180deg,var(--accent),transparent);}
+.hero-glow{position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(0,212,255,0.06),transparent 70%);pointer-events:none;}
+.hero-top{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;}
+.avatar-wrap{position:relative;flex-shrink:0;}
+.avatar{width:80px;height:80px;object-fit:cover;display:block;border:2px solid var(--border2);}
+.avatar-ring{position:absolute;inset:-3px;border:1px solid var(--accent);pointer-events:none;}
+.avatar-ring::before,.avatar-ring::after{content:'';position:absolute;width:8px;height:8px;border-color:var(--accent);border-style:solid;}
+.avatar-ring::before{top:-1px;left:-1px;border-width:2px 0 0 2px;}
+.avatar-ring::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0;}
+.hero-name-block{flex:1;min-width:0;}
+.hero-username{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;letter-spacing:2px;color:#fff;text-transform:uppercase;line-height:1;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hero-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.chip{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--textd);letter-spacing:1px;display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);padding:3px 8px;}
+.chip .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);}
+.chip .dot.g{background:var(--green);}
+.chip .dot.r{background:var(--red);}
+.chip-flag{font-size:14px;line-height:1;}
+.chip-mulogo{width:16px;height:16px;object-fit:cover;border-radius:1px;}
+.mil-rank{flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);padding:10px 14px;text-align:center;min-width:70px;}
+.mil-rank-num{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:var(--gold);line-height:1;}
+.mil-rank-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--textm);letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.hstat{background:var(--bg3);border:1px solid var(--border);padding:12px;text-align:center;}
+.hstat-val{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--accent);line-height:1;}
+.hstat-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--textm);letter-spacing:1px;text-transform:uppercase;margin-top:3px;}
+
+/* ── SECTION HEADER ── */
+.sec-hdr{display:flex;align-items:center;gap:10px;margin:18px 0 12px;}
+.sec-hdr-line{flex:1;height:1px;background:var(--border);}
+.sec-hdr-title{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--textd);letter-spacing:4px;text-transform:uppercase;white-space:nowrap;}
+.sec-hdr-dot{width:4px;height:4px;background:var(--accent);border-radius:50%;flex-shrink:0;}
+
+/* ── RESOURCES ── */
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.res-card{background:var(--bg2);border:1px solid var(--border);padding:14px;}
+.res-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.res-name{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--textd);letter-spacing:2px;text-transform:uppercase;}
+.res-vals{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;color:var(--text);}
+.res-bar{height:4px;background:var(--border);overflow:hidden;border-radius:2px;margin-bottom:6px;}
+.res-fill{height:100%;border-radius:2px;transition:width 1.2s ease;}
+.res-fill.health{background:var(--green);}
+.res-fill.energy{background:var(--orange);}
+.res-fill.entrepreneurship{background:#a855f7;}
+.res-fill.hunger{background:#eab308;}
+.res-meta{display:flex;justify-content:space-between;}
+.res-meta span{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--textm);}
+
+/* ── PROGRESSION ── */
+.prog-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.prog-card{background:var(--bg2);border:1px solid var(--border);padding:12px;text-align:center;}
+.prog-val{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--text);line-height:1;}
+.prog-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--textm);letter-spacing:1px;text-transform:uppercase;margin-top:4px;}
+
+/* ── COMBAT SKILLS ── */
+.skills-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.skill-card{background:var(--bg2);border:1px solid var(--border);padding:14px;position:relative;overflow:hidden;}
+.skill-card::after{content:'';position:absolute;top:0;right:0;width:2px;height:100%;background:var(--accent);opacity:.3;}
+.skill-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.skill-name{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--textd);letter-spacing:1px;text-transform:uppercase;}
+.skill-lv{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;color:var(--accent);background:var(--adim);padding:1px 6px;letter-spacing:1px;}
+.skill-val{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:#fff;line-height:1;margin-bottom:4px;}
+.skill-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--textm);letter-spacing:.5px;}
+.skill-bar{height:2px;background:var(--border);margin-top:8px;overflow:hidden;}
+.skill-fill{height:100%;background:var(--accent);transition:width 1s ease;}
+.skill-card.atk .skill-fill{background:var(--red);}
+
+/* ── WEALTH ── */
+.wealth-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.wealth-card{background:var(--bg2);border:1px solid var(--border);padding:12px;}
+.wealth-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--textm);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.wealth-val{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--gold);}
+.wealth-card.total{border-color:rgba(245,197,24,0.3);background:rgba(245,197,24,0.04);}
+.wealth-card.total .wealth-val{font-size:22px;color:#fff;}
+.wealth-unit{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--textm);margin-left:2px;}
+
+/* ── RANKINGS ── */
+.rank-list{background:var(--bg2);border:1px solid var(--border);overflow:hidden;margin-bottom:14px;}
+.rank-row{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border);gap:10px;transition:background .15s;}
+.rank-row:last-child{border-bottom:none;}
+.rank-row:hover{background:rgba(0,212,255,0.03);}
+.rank-name{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--textd);letter-spacing:1px;text-transform:uppercase;flex:1;}
+.rank-val{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--text);min-width:64px;text-align:right;}
+.rank-pos{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--textm);min-width:44px;text-align:right;}
+.tier{font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;padding:2px 8px;text-transform:uppercase;min-width:68px;text-align:center;}
+.tier.bronze{background:rgba(205,127,50,.15);color:var(--bronze);border:1px solid rgba(205,127,50,.3);}
+.tier.silver{background:rgba(192,192,192,.1);color:var(--silver);border:1px solid rgba(192,192,192,.25);}
+.tier.gold{background:rgba(245,197,24,.1);color:var(--gold);border:1px solid rgba(245,197,24,.25);}
+.tier.platinum{background:rgba(229,228,226,.1);color:var(--platinum);border:1px solid rgba(229,228,226,.2);}
+.tier.master{background:rgba(255,63,63,.1);color:#ff6060;border:1px solid rgba(255,63,63,.3);}
+
+/* ══════════════════════════════════════
+   TRANSACTIONS TAB
+══════════════════════════════════════ */
+.tx-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.tx-title{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;letter-spacing:4px;text-transform:uppercase;}
+.tx-title span{color:var(--accent);}
+.action-btn{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:9px 18px;border:1px solid var(--border2);background:var(--bg3);color:var(--textd);cursor:pointer;transition:all .2s;}
+.action-btn:hover{border-color:var(--accent);color:var(--accent);}
+.action-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* PROFIT TRACKER */
+.tracker{background:var(--bg2);border:1px solid rgba(245,197,24,.25);padding:16px;margin-bottom:16px;}
+.tracker-hdr{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.tracker-icon{font-size:14px;}
+.tracker-title{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:3px;color:var(--gold);text-transform:uppercase;}
+.trade-card{background:var(--bg3);border:1px solid var(--border2);padding:14px;margin-bottom:8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.trade-card:last-child{margin-bottom:0;}
+.trade-card.matched{border-color:rgba(46,204,113,.3);background:rgba(46,204,113,.03);}
+.trade-card.pending{border-color:rgba(245,197,24,.25);}
+.trade-item-icon{width:40px;height:40px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden;}
+.trade-item-icon img{width:32px;height:32px;object-fit:contain;}
+.trade-info{flex:1;min-width:120px;}
+.trade-name{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:var(--text);line-height:1;}
+.trade-skills{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--textm);margin-top:3px;}
+.trade-nums{display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+.tnum{display:flex;flex-direction:column;gap:2px;}
+.tnum-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--textm);letter-spacing:2px;text-transform:uppercase;}
+.tnum-val{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;line-height:1;}
+.tnum-val.bp{color:var(--red);}
+.tnum-val.sp{color:var(--green);}
+.tnum-val.pp{color:var(--green);}
+.tnum-val.pn{color:var(--red);}
+.tnum-val.wait{color:var(--textm);font-size:12px;}
+.trade-right{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0;}
+.trade-status{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:3px 8px;border:1px solid;}
+.trade-status.matched{color:var(--green);border-color:rgba(46,204,113,.4);background:rgba(46,204,113,.08);}
+.trade-status.pending{color:var(--gold);border-color:rgba(245,197,24,.4);background:rgba(245,197,24,.06);}
+.trade-date{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--textm);}
+.rm-btn{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:3px 8px;border:1px solid rgba(255,63,63,.3);background:transparent;color:var(--red);cursor:pointer;transition:all .2s;text-transform:uppercase;}
+.rm-btn:hover{background:rgba(255,63,63,.1);}
+.empty-state{text-align:center;padding:28px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--textm);letter-spacing:2px;}
+
+/* TYPE TABS */
+.type-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.type-tab{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;padding:5px 12px;border:1px solid var(--border);background:transparent;color:var(--textm);cursor:pointer;transition:all .2s;text-transform:uppercase;}
+.type-tab:hover{border-color:var(--border2);color:var(--textd);}
+.type-tab.active{border-color:var(--accent);color:var(--accent);background:var(--adim);}
+
+/* SUMMARY */
+.tx-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.tx-sc{background:var(--bg2);border:1px solid var(--border);padding:12px;}
+.tx-sc-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--textm);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.tx-sc-val{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;line-height:1;}
+.tx-sc-val.g{color:var(--green);}
+.tx-sc-val.r{color:var(--red);}
+.tx-sc-val.a{color:var(--accent);}
+
+/* TX LOADING */
+.tx-spin{display:none;text-align:center;padding:32px;}
+.tx-prog{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--textm);letter-spacing:2px;margin-top:8px;}
+
+/* TX TABLE */
+.tx-table-wrap{background:var(--bg2);border:1px solid var(--border);overflow-x:auto;margin-bottom:10px;}
+.tx-table{width:100%;border-collapse:collapse;min-width:420px;}
+.tx-table th{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--textm);text-transform:uppercase;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);background:var(--bg3);}
+.tx-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.tx-table tr:last-child td{border-bottom:none;}
+.tx-table tr:hover td{background:rgba(0,212,255,0.025);}
+
+/* TX item cell */
+.tx-item-cell{display:flex;align-items:center;gap:10px;}
+.tx-icon{width:36px;height:36px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+.tx-icon img{width:28px;height:28px;object-fit:contain;}
+.tx-item-name{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;color:var(--text);line-height:1;}
+.tx-item-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--textm);margin-top:2px;}
+.rarity-tag{display:inline-block;font-family:'Rajdhani',sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;padding:1px 6px;text-transform:uppercase;margin-top:3px;}
+
+/* direction badge */
+.dir-badge{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 8px;text-transform:uppercase;display:inline-block;}
+.dir-badge.buy{background:rgba(46,204,113,.12);color:var(--green);border:1px solid rgba(46,204,113,.25);}
+.dir-badge.sell{background:rgba(255,63,63,.12);color:var(--red);border:1px solid rgba(255,63,63,.25);}
+.dir-badge.income{background:rgba(0,212,255,.1);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+
+.tx-money{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;}
+.tx-money.buy{color:var(--red);}
+.tx-money.sell{color:var(--green);}
+.tx-money.income{color:var(--accent);}
+.tx-date{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--textm);}
+.mark-btn{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:4px 9px;border:1px solid var(--border2);background:transparent;color:var(--textm);cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap;}
+.mark-btn:hover{border-color:var(--gold);color:var(--gold);}
+.mark-btn.on{border-color:var(--gold);color:var(--gold);background:rgba(245,197,24,.08);}
+
+/* PAGINATION */
+.tx-pages{display:flex;justify-content:center;gap:8px;margin-top:10px;margin-bottom:16px;}
+.pg-info{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--textm);letter-spacing:1px;display:flex;align-items:center;padding:0 10px;}
+
+/* ── RESPONSIVE ── */
+@media(min-width:600px){
+  .hdr-tag{display:block;}
+  .res-grid{grid-template-columns:repeat(4,1fr);}
+  .prog-grid{grid-template-columns:repeat(5,1fr);}
+  .skills-grid{grid-template-columns:repeat(3,1fr);}
+  .wealth-grid{grid-template-columns:repeat(6,1fr);}
+  .tx-summary{grid-template-columns:repeat(4,1fr);}
+}
+@media(min-width:768px){
+  .hero-stats{grid-template-columns:repeat(3,1fr);}
+  .wealth-card.total .wealth-val{font-size:24px;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="lbox">
+    <div class="l-logo">WAR<span>ERA</span></div>
+    <div class="l-sub">// INTEL DASHBOARD — SECURE ACCESS</div>
+    <div class="l-check" id="lCheck">// CHECKING SESSION...</div>
+    <div id="lForm">
+      <label class="l-label">Email</label>
+      <input class="l-input" type="email" id="lEmail" placeholder="your@email.com" autocomplete="email"/>
+      <label class="l-label">Password</label>
+      <input class="l-input" type="password" id="lPass" placeholder="••••••••" autocomplete="current-password"/>
+      <button class="l-btn" id="lBtn" onclick="doLogin()">ACCESS DASHBOARD</button>
+      <div class="l-err" id="lErr"></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header class="hdr">
+    <div class="hdr-inner">
+      <div class="hdr-logo">WAR<span>ERA</span></div>
+      <div class="hdr-right">
+        <div class="hdr-tag">// INTEL v2.0</div>
+        <button class="logout-btn" onclick="doLogout()">⏻ LOGOUT</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="tab-bar">
+    <div class="tab-bar-inner">
+      <button class="tab-btn active" onclick="switchTab('profile')">⬡ PROFILE</button>
+      <button class="tab-btn" onclick="switchTab('transactions')">◈ TRANSACTIONS</button>
+    </div>
+  </div>
+
+  <!-- PROFILE PAGE -->
+  <div class="page active" id="page-profile">
+    <div class="search-wrap">
+      <div class="search-title">PLAYER <span>INTEL</span></div>
+      <div class="search-sub">// search by username</div>
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="ENTER USERNAME..." autocomplete="off"/>
+        <button id="searchBtn" onclick="searchPlayer()">SEARCH</button>
+      </div>
+      <div class="s-err" id="sErr"></div>
+    </div>
+
+    <div class="spin-wrap" id="profLoad">
+      <div class="spinner"></div>
+      <div class="spin-txt">// FETCHING INTEL...</div>
+    </div>
+
+    <div id="profContent" style="display:none;">
+      <!-- HERO -->
+      <div class="hero" id="heroCard">
+        <div class="hero-glow"></div>
+        <div class="hero-top">
+          <div class="avatar-wrap">
+            <img class="avatar" id="avatar" src="" alt=""/>
+            <div class="avatar-ring"></div>
+          </div>
+          <div class="hero-name-block">
+            <div class="hero-username" id="username"></div>
+            <div class="hero-chips" id="heroChips"></div>
+          </div>
+          <div class="mil-rank">
+            <div class="mil-rank-num" id="milRank"></div>
+            <div class="mil-rank-lbl">MIL RANK</div>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div class="hstat"><div class="hstat-val" id="hSP"></div><div class="hstat-lbl">Skill Pts</div></div>
+          <div class="hstat"><div class="hstat-val" id="hWorks"></div><div class="hstat-lbl">Works Done</div></div>
+          <div class="hstat"><div class="hstat-val" id="hDmg"></div><div class="hstat-lbl">Dmg Dealt</div></div>
+        </div>
+      </div>
+
+      <!-- RESOURCES -->
+      <div class="sec-hdr"><div class="sec-hdr-dot"></div><div class="sec-hdr-title">Resources</div><div class="sec-hdr-line"></div></div>
+      <div class="res-grid" id="resGrid"></div>
+
+      <!-- PROGRESSION -->
+      <div class="sec-hdr"><div class="sec-hdr-dot"></div><div class="sec-hdr-title">Progression</div><div class="sec-hdr-line"></div></div>
+      <div class="prog-grid" id="progGrid"></div>
+
+      <!-- COMBAT SKILLS -->
+      <div class="sec-hdr"><div class="sec-hdr-dot"></div><div class="sec-hdr-title">Combat Skills</div><div class="sec-hdr-line"></div></div>
+      <div class="skills-grid" id="skillsGrid"></div>
+
+      <!-- WEALTH -->
+      <div class="sec-hdr"><div class="sec-hdr-dot"></div><div class="sec-hdr-title">Wealth Breakdown</div><div class="sec-hdr-line"></div></div>
+      <div class="wealth-grid" id="wealthGrid"></div>
+
+      <!-- RANKINGS -->
+      <div class="sec-hdr"><div class="sec-hdr-dot"></div><div class="sec-hdr-title">Rankings</div><div class="sec-hdr-line"></div></div>
+      <div class="rank-list" id="rankList"></div>
+    </div>
+  </div>
+
+  <!-- TRANSACTIONS PAGE -->
+  <div class="page" id="page-transactions">
+    <div class="tx-hdr">
+      <div class="tx-title">TRANSACTION <span>LEDGER</span></div>
+      <button class="action-btn" id="refreshBtn" onclick="loadAllTx()">↺ REFRESH</button>
+    </div>
+
+    <div class="tracker">
+      <div class="tracker-hdr">
+        <span class="tracker-icon">◆</span>
+        <span class="tracker-title">Trade Profit Tracker</span>
+      </div>
+      <div id="tradeList"><div class="empty-state">// NO MARKED TRADES — mark a BUY in Item Market below</div></div>
+    </div>
+
+    <div class="type-tabs" id="typeTabs">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--textm);">// Click REFRESH to load transactions</span>
+    </div>
+    <div class="tx-summary" id="txSummary"></div>
+
+    <div class="tx-spin" id="txLoad">
+      <div class="spinner"></div>
+      <div class="spin-txt">// FETCHING TRANSACTIONS...</div>
+      <div class="tx-prog" id="txProg"></div>
+    </div>
+
+    <div class="tx-table-wrap" id="txTableWrap" style="display:none;">
+      <table class="tx-table">
+        <thead><tr><th>Dir</th><th>Item</th><th>Amount</th><th>Date</th><th></th></tr></thead>
+        <tbody id="txBody"></tbody>
+      </table>
+    </div>
+    <div class="tx-pages" id="txPages"></div>
+    <div class="empty-state" id="txEmpty" style="display:none;">// NO TRANSACTIONS IN THIS CATEGORY</div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp }    from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js';
+import { getFirestore, doc, setDoc, deleteDoc, collection, getDocs }
+  from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+
+const fb  = initializeApp({
+  apiKey:"AIzaSyAZtRwKCTr-KVqv164k6kmHe9M7gzirJSc",
+  authDomain:"balancer-b8f91.firebaseapp.com",
+  projectId:"balancer-b8f91",
+  storageBucket:"balancer-b8f91.firebasestorage.app",
+  messagingSenderId:"142245100233",
+  appId:"1:142245100233:web:21c64a9f3aa41fff1feb18"
+});
+const db   = getFirestore(fb);
+const auth = getAuth(fb);
+
+// ── Constants ──
+const ALLOWED_UID = 'PWhXV2DzbPNKNMMPRW5dbEJyeqa2';
+const MY_UID      = '69928c2fc963e9f1883d0f63';
+const API_BASE    = 'https://api2.warera.io';
+const API_KEY     = 'wae_9bc274eccaa0629f667baa825348e6282480076dc1a781999e3265b55d6c6179';
+const HDR         = { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' };
+const SEVEN_DAYS  = 7 * 24 * 60 * 60 * 1000;
+const PAGE_SIZE   = 20;
+const ICON_BASE   = 'https://app.warera.io/images/items/';
+
+const TX_TYPES  = ['itemMarket','trading','wage','donation','applicationFee','articleTip','openCase','craftItem','dismantleItem','battleLoot'];
+const TX_LABELS = {itemMarket:'Item Market',trading:'Trading',wage:'Wage',donation:'Donation',applicationFee:'App Fee',articleTip:'Article Tip',openCase:'Open Case',craftItem:'Craft Item',dismantleItem:'Dismantle',battleLoot:'Battle Loot'};
+
+// Rarity by tier number
+const RARITY = ['','common','uncommon','rare','epic','legendary','mythic'];
+const RARITY_LABEL = ['','Common','Uncommon','Rare','Epic','Legendary','Mythic'];
+const RARITY_COLOR = {
+  common:'#6b7280', uncommon:'#22c55e', rare:'#3b82f6',
+  epic:'#a855f7', legendary:'#f59e0b', mythic:'#ef4444'
+};
+// Equipment base names
+const EQUIP_BASE = ['chest','helmet','boots','pants','gloves'];
+const WEAPONS    = ['knife','gun','rifle','sniper','tank','jet'];
+
+const COUNTRY_FLAGS = {
+  'India':'🇮🇳','Pakistan':'🇵🇰','USA':'🇺🇸','United States':'🇺🇸','China':'🇨🇳','Russia':'🇷🇺',
+  'Germany':'🇩🇪','France':'🇫🇷','Brazil':'🇧🇷','UK':'🇬🇧','United Kingdom':'🇬🇧','Japan':'🇯🇵',
+  'Turkey':'🇹🇷','Indonesia':'🇮🇩','Iran':'🇮🇷','Mexico':'🇲🇽','Spain':'🇪🇸','Italy':'🇮🇹',
+  'Canada':'🇨🇦','Australia':'🇦🇺','Argentina':'🇦🇷','Poland':'🇵🇱','Ukraine':'🇺🇦',
+  'Netherlands':'🇳🇱','Saudi Arabia':'🇸🇦','Egypt':'🇪🇬','Nigeria':'🇳🇬','South Korea':'🇰🇷',
+  'Thailand':'🇹🇭','Romania':'🇷🇴','Portugal':'🇵🇹','Greece':'🇬🇷','Sweden':'🇸🇪',
+  'Belgium':'🇧🇪','Philippines':'🇵🇭','Vietnam':'🇻🇳','Malaysia':'🇲🇾','Colombia':'🇨🇴',
+  'Chile':'🇨🇱','Israel':'🇮🇱','Serbia':'🇷🇸','Croatia':'🇭🇷','Bangladesh':'🇧🇩',
+  'Sri Lanka':'🇱🇰','Nepal':'🇳🇵',
+};
+
+// ── Helpers ──
+function fmtK(n){
+  if(n===null||n===undefined)return'—';n=Number(n);
+  if(Math.abs(n)>=1_000_000)return(n/1_000_000).toFixed(2).replace(/\.?0+$/,'')+'M';
+  if(Math.abs(n)>=1_000)    return(n/1_000).toFixed(2).replace(/\.?0+$/,'')+'K';
+  return parseFloat(n.toFixed(2)).toString();
+}
+function fmt(n){if(n===null||n===undefined)return'—';return Number(n).toLocaleString();}
+function fmtDate(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
+function fmtDT(iso){if(!iso)return'—';const d=new Date(iso);return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
+function setEl(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function skillsStr(s){if(!s||!Object.keys(s).length)return'';return Object.entries(s).map(([k,v])=>`${k}:${v}`).join(' · ');}
+function skillsMatch(a,b){if(!a||!b)return false;const ka=Object.keys(a);if(ka.length!==Object.keys(b).length)return false;return ka.every(k=>a[k]===b[k]);}
+
+// Parse item code → { base, tier, rarity, label, iconKey }
+function parseItem(code){
+  if(!code)return{base:code,tier:0,rarity:'',label:code,iconKey:code};
+  // Check if it's a weapon
+  const wep=WEAPONS.find(w=>code.toLowerCase().startsWith(w));
+  if(wep)return{base:wep,tier:0,rarity:'',label:cap(wep),iconKey:wep,isWeapon:true};
+  // Equipment: name + number
+  const match=code.match(/^([a-z]+?)(\d)$/i);
+  if(match){
+    const base=match[1].toLowerCase();
+    const tier=parseInt(match[2]);
+    const rarity=RARITY[tier]||'';
+    const label=cap(base);
+    return{base,tier,rarity,label,iconKey:base};
+  }
+  // case1/case2
+  if(code==='case1')return{base:'case1',tier:1,rarity:'common',label:'Common Case',iconKey:'case1'};
+  if(code==='case2')return{base:'case2',tier:6,rarity:'mythic',label:'Mythic Case',iconKey:'case2'};
+  return{base:code,tier:0,rarity:'',label:cap(code),iconKey:code};
+}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+
+// Item icon HTML with rarity-colored bg
+function itemIconHTML(code,size=36){
+  const p=parseItem(code);
+  const bg=p.rarity?RARITY_COLOR[p.rarity]+'22':'#1c2a38';
+  const border=p.rarity?RARITY_COLOR[p.rarity]+'55':'#243344';
+  const imgSize=Math.round(size*0.78);
+  return`<div style="width:${size}px;height:${size}px;background:${bg};border:1px solid ${border};border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+    <img src="${ICON_BASE}${p.iconKey}.png?v=1234" width="${imgSize}" height="${imgSize}" style="object-fit:contain;" onerror="this.style.display='none'"/>
+  </div>`;
+}
+
+// Rarity tag HTML
+function rarityTag(rarity){
+  if(!rarity)return'';
+  const c=RARITY_COLOR[rarity]||'#6b7280';
+  return`<span class="rarity-tag" style="color:${c};background:${c}18;border:1px solid ${c}44;">${cap(rarity)}</span>`;
+}
+
+async function apiPost(endpoint,body){
+  const r=await fetch(`${API_BASE}/trpc/${endpoint}`,{method:'POST',headers:HDR,body:JSON.stringify(body)});
+  return r.json();
+}
+
+// ── AUTH ──
+document.getElementById('lCheck').style.display='block';
+document.getElementById('lForm').style.display='none';
+
+onAuthStateChanged(auth,user=>{
+  document.getElementById('lCheck').style.display='none';
+  if(user&&user.uid===ALLOWED_UID){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+    loadMarkedTrades();
+  } else {
+    if(user)signOut(auth);
+    document.getElementById('loginScreen').style.display='flex';
+    document.getElementById('lForm').style.display='block';
+    document.getElementById('app').style.display='none';
+  }
+});
+
+window.doLogin=async function(){
+  const email=document.getElementById('lEmail').value.trim();
+  const pass=document.getElementById('lPass').value;
+  const err=document.getElementById('lErr');
+  const btn=document.getElementById('lBtn');
+  err.style.display='none';btn.disabled=true;btn.textContent='AUTHENTICATING...';
+  try{ await signInWithEmailAndPassword(auth,email,pass); }
+  catch(e){
+    err.textContent='// ACCESS DENIED: '+(e.code==='auth/invalid-credential'?'Invalid credentials.':e.message);
+    err.style.display='block';btn.disabled=false;btn.textContent='ACCESS DASHBOARD';
+  }
+};
+window.doLogout=()=>signOut(auth);
+document.getElementById('lPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+// ── TAB SWITCH ──
+window.switchTab=function(tab){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['profile','transactions'][i]===tab));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+};
+
+// ══ PROFILE ══
+window.searchPlayer=async function(){
+  const q=document.getElementById('searchInput').value.trim();if(!q)return;
+  const err=document.getElementById('sErr');err.style.display='none';
+  document.getElementById('profLoad').style.display='block';
+  document.getElementById('profContent').style.display='none';
+  document.getElementById('searchBtn').disabled=true;
+  try{
+    const sd=await apiPost('search.searchAnything',{searchText:q});
+    const ids=sd?.result?.data?.userIds;
+    if(!ids||!ids.length)throw new Error('No player found.');
+    const qL=q.toLowerCase();let d=null;
+    for(const uid of ids){
+      const pd=await apiPost('user.getUserById',{userId:uid});
+      const u=pd?.result?.data;
+      if(u&&u.usernameLower===qL){d=u;break;}
+    }
+    if(!d){const pd=await apiPost('user.getUserById',{userId:ids[0]});d=pd?.result?.data;}
+    if(!d)throw new Error('Could not fetch profile.');
+    const[cn,mu]=await Promise.all([
+      d.country?apiPost('country.getCountryById',{countryId:d.country}).then(r=>{const c=r?.result?.data;return c?.name||c?.countryName||null;}).catch(()=>null):null,
+      d.mu?apiPost('mu.getById',{muId:d.mu}).then(r=>r?.result?.data||null).catch(()=>null):null,
+    ]);
+    renderProfile(d,cn,mu);
+  }catch(e){err.textContent='// ERROR: '+e.message;err.style.display='block';}
+  finally{document.getElementById('profLoad').style.display='none';document.getElementById('searchBtn').disabled=false;}
+};
+document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlayer();});
+
+function renderProfile(d,cn,mu){
+  const sk=d.skills,lv=d.leveling,st=d.stats,rk=d.rankings,wl=st?.wealth;
+
+  // Hero
+  document.getElementById('avatar').src=d.avatarUrl||'';
+  setEl('username',d.username);
+  setEl('milRank',d.militaryRank);
+  setEl('hSP',lv.spentSkillPoints);
+  setEl('hWorks',fmtK(st.worksCount));
+  setEl('hDmg',fmtK(st.damagesCount));
+
+  // Chips
+  const chips=[];
+  chips.push(`<span class="chip"><span class="dot ${d.isActive?'g':'r'}"></span>${d.isActive?'ACTIVE':'INACTIVE'}</span>`);
+  chips.push(`<span class="chip"><span class="dot"></span>LV ${lv.level}</span>`);
+  chips.push(`<span class="chip"><span class="dot"></span>${fmtDate(d.createdAt)}</span>`);
+  const reset=d.dates?.lastSkillsResetAt;
+  if(reset)chips.push(`<span class="chip"><span class="dot"></span>RESET ${fmtDate(reset)}</span>`);
+  if(cn)chips.push(`<span class="chip"><span class="chip-flag">${COUNTRY_FLAGS[cn]||'🏳️'}</span>${cn.toUpperCase()}</span>`);
+  if(mu)chips.push(`<span class="chip">${mu.avatarUrl?`<img class="chip-mulogo" src="${mu.avatarUrl}"/>`:''}${mu.name||'MU'}</span>`);
+  document.getElementById('heroChips').innerHTML=chips.join('');
+
+  // Resources
+  const RES=[{key:'health',label:'Health',cls:'health'},{key:'energy',label:'Energy',cls:'energy'},{key:'entrepreneurship',label:'Entrep.',cls:'entrepreneurship'},{key:'hunger',label:'Hunger',cls:'hunger'}];
+  document.getElementById('resGrid').innerHTML=RES.map(r=>{
+    const s=sk[r.key];if(!s||s.currentBarValue===undefined)return'';
+    const cur=+Number(s.currentBarValue).toFixed(1),tot=+Number(s.total).toFixed(1);
+    const pct=tot>0?Math.min(100,(cur/tot)*100):0;
+    const regen=+Number(s.hourlyBarRegen).toFixed(1);
+    return`<div class="res-card">
+      <div class="res-top"><span class="res-name">${r.label}</span><span class="res-vals">${cur}<span style="color:var(--textm);font-size:11px;">/${tot}</span></span></div>
+      <div class="res-bar"><div class="res-fill ${r.cls}" style="width:${pct}%"></div></div>
+      <div class="res-meta"><span>LV ${s.level}</span><span>+${regen}/hr</span></div>
+    </div>`;
+  }).join('');
+
+  // Progression
+  const PROG=[
+    {lbl:'Level',val:lv.level},
+    {lbl:'Daily XP',val:lv.dailyXpLeft},
+    {lbl:'SP Spent',val:lv.spentSkillPoints},
+    {lbl:'Avail SP',val:lv.availableSkillPoints},
+    {lbl:'Free Resets',val:lv.freeReset},
+  ];
+  document.getElementById('progGrid').innerHTML=PROG.map(p=>`<div class="prog-card"><div class="prog-val">${p.val}</div><div class="prog-lbl">${p.lbl}</div></div>`).join('');
+
+  // Combat Skills
+  const CK=['attack','criticalChance','criticalDamages','armor','precision','dodge','lootChance'];
+  const CL={attack:'Attack',criticalChance:'Crit Chance',criticalDamages:'Crit Dmg',armor:'Armor',precision:'Precision',dodge:'Dodge',lootChance:'Loot Chance'};
+  document.getElementById('skillsGrid').innerHTML=CK.map(k=>{
+    const s=sk[k];if(!s)return'';
+    const tot=s.total??s.value??0;
+    const ex=[s.weapon?`+${s.weapon} wep`:'',s.equipment?`+${s.equipment} eq`:''].filter(Boolean).join(' · ');
+    return`<div class="skill-card ${k==='attack'?'atk':''}">
+      <div class="skill-top"><span class="skill-name">${CL[k]}</span><span class="skill-lv">LV${s.level}</span></div>
+      <div class="skill-val">${tot!==null?fmtK(tot):'—'}</div>
+      <div class="skill-sub">${s.value?`Base: ${s.value}`:''}${ex?' · '+ex:''}</div>
+      <div class="skill-bar"><div class="skill-fill" style="width:${Math.min(100,(s.level/10)*100)}%"></div></div>
+    </div>`;
+  }).join('');
+
+  // Wealth
+  const WI=wl?[
+    {lbl:'Companies',val:wl.companies},{lbl:'Items',val:wl.items},
+    {lbl:'Money',val:wl.money},{lbl:'Equip.',val:wl.equipments},
+    {lbl:'Weapons',val:wl.weapons},{lbl:'Total',val:wl.total,t:true},
+  ]:[];
+  document.getElementById('wealthGrid').innerHTML=WI.map(w=>`<div class="wealth-card ${w.t?'total':''}">
+    <div class="wealth-lbl">${w.lbl}</div>
+    <div class="wealth-val">${w.val!==undefined?fmtK(w.val):'—'}<span class="wealth-unit">WAE</span></div>
+  </div>`).join('');
+
+  // Rankings
+  const RM={userDamages:'Total Dmg',weeklyUserDamages:'Weekly Dmg',userWealth:'Wealth',userLevel:'Level',userReferrals:'Referrals',userTerrain:'Terrain',userCasesOpened:'Cases',userBounty:'Bounty'};
+  document.getElementById('rankList').innerHTML=Object.entries(RM).map(([k,l])=>{
+    const r=rk[k];if(!r)return'';
+    return`<div class="rank-row">
+      <span class="rank-name">${l}</span>
+      <span class="rank-val">${fmtK(r.value)}</span>
+      <span class="rank-pos">#${fmt(r.rank)}</span>
+      <span class="tier ${r.tier}">${r.tier}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('profContent').style.display='block';
+  document.getElementById('profContent').style.animation='fadeUp .4s ease';
+}
+
+// ══ TRANSACTIONS ══
+let allTx=[], currentType='itemMarket', currentPage=1, markedTrades={};
+
+async function loadMarkedTrades(){
+  try{
+    const snap=await getDocs(collection(db,'trades'));
+    snap.forEach(d=>{markedTrades[d.id]=d.data();});
+    renderTracker();
+  }catch(e){console.warn('FB read:',e);}
+}
+
+window.loadAllTx=async function(){
+  document.getElementById('txLoad').style.display='block';
+  document.getElementById('txTableWrap').style.display='none';
+  document.getElementById('txEmpty').style.display='none';
+  document.getElementById('txPages').innerHTML='';
+  document.getElementById('refreshBtn').disabled=true;
+  allTx=[];let req=0;
+  const cutoff=Date.now()-SEVEN_DAYS;
+  try{
+    for(const t of TX_TYPES){
+      setEl('txProg',`// LOADING ${t.toUpperCase()}...`);
+      let cursor='',go=true;
+      while(go){
+        if(req>0&&req%10===0)await new Promise(r=>setTimeout(r,3500));
+        req++;
+        const body={limit:100,userId:MY_UID,transactionType:t};
+        if(cursor)body.cursor=cursor;
+        const res=await apiPost('transaction.getPaginatedTransactions',body);
+        const items=res?.result?.data?.items||[];
+        const next=res?.result?.data?.nextCursor||res?.result?.data?.cursor||null;
+        let hit=false;
+        for(const tx of items){if(new Date(tx.createdAt).getTime()<cutoff){hit=true;break;}allTx.push(tx);}
+        if(hit||!next||items.length<100)go=false;else cursor=next;
+      }
+    }
+    setEl('txProg',`// DONE — ${allTx.length} TRANSACTIONS`);
+    autoMatch();renderTracker();buildTypeTabs();renderType();
+  }catch(e){console.error(e);setEl('txProg','// ERROR: '+e.message);}
+  finally{document.getElementById('txLoad').style.display='none';document.getElementById('refreshBtn').disabled=false;}
+};
+
+function buildTypeTabs(){
+  const cnt={};TX_TYPES.forEach(t=>cnt[t]=0);
+  allTx.forEach(tx=>{if(cnt[tx.transactionType]!==undefined)cnt[tx.transactionType]++;});
+  document.getElementById('typeTabs').innerHTML=TX_TYPES.map(t=>
+    `<button class="type-tab ${t===currentType?'active':''}" onclick="setType('${t}')">${TX_LABELS[t]} (${cnt[t]})</button>`
+  ).join('');
+}
+
+window.setType=function(t){
+  currentType=t;currentPage=1;
+  document.querySelectorAll('.type-tab').forEach(b=>b.classList.toggle('active',b.textContent.startsWith(TX_LABELS[t])));
+  renderType();
+};
+
+function renderType(){
+  const f=allTx.filter(tx=>tx.transactionType===currentType);
+  renderSummary(f);renderTable(f);
+}
+
+function renderSummary(list){
+  let tin=0,tout=0;
+  list.forEach(tx=>{if(tx.buyerId===MY_UID)tout+=tx.money||0;else tin+=tx.money||0;});
+  const net=tin-tout;
+  document.getElementById('txSummary').innerHTML=`
+    <div class="tx-sc"><div class="tx-sc-lbl">Total In</div><div class="tx-sc-val g">+${fmtK(tin)}</div></div>
+    <div class="tx-sc"><div class="tx-sc-lbl">Total Out</div><div class="tx-sc-val r">-${fmtK(tout)}</div></div>
+    <div class="tx-sc"><div class="tx-sc-lbl">Net</div><div class="tx-sc-val ${net>=0?'g':'r'}">${net>=0?'+':''}${fmtK(net)}</div></div>
+    <div class="tx-sc"><div class="tx-sc-lbl">Count</div><div class="tx-sc-val a">${list.length}</div></div>`;
+}
+
+function renderTable(list){
+  const pages=Math.max(1,Math.ceil(list.length/PAGE_SIZE));
+  if(currentPage>pages)currentPage=pages;
+  const pg=list.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
+  if(!list.length){
+    document.getElementById('txTableWrap').style.display='none';
+    document.getElementById('txEmpty').style.display='block';
+    document.getElementById('txPages').innerHTML='';return;
+  }
+  document.getElementById('txEmpty').style.display='none';
+  document.getElementById('txTableWrap').style.display='block';
+
+  document.getElementById('txBody').innerHTML=pg.map(tx=>{
+    const isBuy=tx.buyerId===MY_UID, isSell=tx.sellerId===MY_UID;
+    const hasDirs=tx.transactionType==='itemMarket'||tx.transactionType==='trading';
+    const dir=hasDirs?(isBuy?'buy':'sell'):null;
+    const mdir=dir??(isSell?'sell':'income');
+    const sign=mdir==='buy'?'-':'+';
+    const isMarked=!!markedTrades[tx._id];
+    const canMark=currentType==='itemMarket'&&isBuy&&!isMarked;
+    const canUnmark=currentType==='itemMarket'&&isMarked;
+
+    const p=parseItem(tx.itemCode);
+    const iconHtml=tx.itemCode?itemIconHTML(tx.itemCode,36):'';
+    const nameHtml=p.isWeapon
+      ? `<div class="tx-item-name">${p.label}</div>`
+      : `<div class="tx-item-name">${p.label}</div>${p.rarity?rarityTag(p.rarity):''}`;
+    const skillHtml=tx.item?.skills?`<div class="tx-item-sub">${skillsStr(tx.item.skills)}</div>`:'';
+
+    return`<tr>
+      <td><span class="dir-badge ${mdir}">${dir?dir.toUpperCase():'IN'}</span></td>
+      <td><div class="tx-item-cell">${iconHtml}<div>${nameHtml}${skillHtml}</div></div></td>
+      <td><span class="tx-money ${mdir}">${sign}${fmtK(tx.money)} WAE</span></td>
+      <td><span class="tx-date">${fmtDT(tx.createdAt)}</span></td>
+      <td>${canMark?`<button class="mark-btn" onclick="markTrade('${tx._id}')">⬡ MARK</button>`:''}${canUnmark?`<button class="mark-btn on" onclick="unmarkTrade('${tx._id}')">✓ MARKED</button>`:''}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('txPages').innerHTML=pages>1?`
+    <button class="action-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>← PREV</button>
+    <span class="pg-info">${currentPage} / ${pages}</span>
+    <button class="action-btn" onclick="goPage(${currentPage+1})" ${currentPage===pages?'disabled':''}>NEXT →</button>`:'';
+}
+
+window.goPage=function(p){currentPage=p;renderType();window.scrollTo({top:0,behavior:'smooth'});};
+
+window.markTrade=async function(txId){
+  const tx=allTx.find(t=>t._id===txId);if(!tx)return;
+  const trade={txId,itemCode:tx.itemCode,skills:tx.item?.skills||{},buyPrice:tx.money,buyDate:tx.createdAt,status:'pending',sellPrice:null,sellDate:null,profit:null};
+  try{await setDoc(doc(db,'trades',txId),trade);markedTrades[txId]=trade;autoMatch();renderTracker();renderType();}
+  catch(e){alert('Firebase: '+e.message);}
+};
+
+window.unmarkTrade=async function(txId){
+  if(!confirm('Remove this trade?'))return;
+  try{await deleteDoc(doc(db,'trades',txId));delete markedTrades[txId];renderTracker();renderType();}
+  catch(e){alert('Firebase: '+e.message);}
+};
+
+function autoMatch(){
+  const sells=allTx.filter(tx=>tx.transactionType==='itemMarket'&&tx.sellerId===MY_UID);
+  Object.entries(markedTrades).forEach(([txId,trade])=>{
+    if(trade.status==='matched')return;
+    const bt=new Date(trade.buyDate).getTime();
+    const cands=sells.filter(s=>s.itemCode===trade.itemCode&&new Date(s.createdAt).getTime()>bt&&skillsMatch(s.item?.skills,trade.skills));
+    if(!cands.length)return;
+    cands.sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
+    const m=cands[0];
+    const updated={...trade,status:'matched',sellPrice:m.money,sellDate:m.createdAt,profit:parseFloat((m.money-trade.buyPrice).toFixed(3))};
+    markedTrades[txId]=updated;
+    setDoc(doc(db,'trades',txId),updated).catch(console.warn);
+  });
+}
+
+function renderTracker(){
+  const trades=Object.values(markedTrades);
+  if(!trades.length){
+    document.getElementById('tradeList').innerHTML='<div class="empty-state">// NO MARKED TRADES — mark a BUY in Item Market below</div>';return;
+  }
+  trades.sort((a,b)=>new Date(b.buyDate)-new Date(a.buyDate));
+  document.getElementById('tradeList').innerHTML=trades.map(t=>{
+    const p=parseItem(t.itemCode);
+    const iconHtml=itemIconHTML(t.itemCode,40);
+    const profCls=t.profit!==null?(t.profit>=0?'pp':'pn'):'';
+    return`<div class="trade-card ${t.status}">
+      ${iconHtml}
+      <div class="trade-info">
+        <div class="trade-name">${p.isWeapon?p.label:p.label+(p.rarity?' · <span style="color:'+RARITY_COLOR[p.rarity]+';font-size:11px;">'+cap(p.rarity)+'</span>':'')}</div>
+        <div class="trade-skills">${skillsStr(t.skills)||'—'}</div>
+      </div>
+      <div class="trade-nums">
+        <div class="tnum"><div class="tnum-lbl">Bought</div><div class="tnum-val bp">-${fmtK(t.buyPrice)}</div></div>
+        ${t.sellPrice!==null
+          ?`<div class="tnum"><div class="tnum-lbl">Sold</div><div class="tnum-val sp">+${fmtK(t.sellPrice)}</div></div>`
+          :`<div class="tnum"><div class="tnum-lbl">Sold</div><div class="tnum-val wait">pending...</div></div>`}
+        ${t.profit!==null?`<div class="tnum"><div class="tnum-lbl">Profit</div><div class="tnum-val ${profCls}">${t.profit>=0?'+':''}${fmtK(t.profit)}</div></div>`:''}
+      </div>
+      <div class="trade-right">
+        <span class="trade-status ${t.status}">${t.status==='matched'?'✓ MATCHED':'⏳ PENDING'}</span>
+        <span class="trade-date">${fmtDate(t.buyDate)}</span>
+        <button class="rm-btn" onclick="unmarkTrade('${t.txId}')">✕ REMOVE</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>
